@@ -1,25 +1,25 @@
 
 # coding: utf-8
 
-# In[15]:
+# In[1]:
 
 import pandas as pd
 df = pd.read_csv('nama_10_gdp_1_Data_aaa.csv')
 df.head()
 
 
-# In[16]:
+# In[2]:
 
 df.columns
 
 
-# In[9]:
+# In[3]:
 
 available_indicators = df['NA_ITEM'].unique()
 available_indicators
 
 
-# In[14]:
+# In[ ]:
 
 import dash
 import dash_core_components as dcc
@@ -31,8 +31,10 @@ app = dash.Dash(__name__)
 server = app.server
 app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
+
 available_indicators = df['NA_ITEM'].unique()
-#available_years = df['TIME'].unique()
+
+available_countries = df['GEO'].unique()
 
 app.layout = html.Div([
     html.Div([
@@ -41,7 +43,7 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='xaxis-column',
                 options=[{'label': i, 'value': i} for i in available_indicators],
-                value='Gross domestic product at market prices' # initial value for this dropdown
+                value='Gross domestic product at market prices' 
             ),
             dcc.RadioItems(
                 id='xaxis-type',
@@ -56,7 +58,7 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='yaxis-column',
                 options=[{'label': i, 'value': i} for i in available_indicators],
-                value='Final consumption expenditure' # another indicator
+                value='Final consumption expenditure' 
             ),
             dcc.RadioItems(
                 id='yaxis-type',
@@ -76,7 +78,29 @@ app.layout = html.Div([
         value=df['TIME'].max(),
         step=None,
         marks={str(year): str(year) for year in df['TIME'].unique()}
-    )
+    ),
+    
+    html.Div([
+
+        html.Div([
+            dcc.Dropdown(  
+                id='country',
+                options=[{'label': i, 'value': i} for i in available_countries],
+                value='Spain' 
+            )
+        ],
+        style={'width': '48%', 'display': 'inline-block'}),
+
+        html.Div([
+            dcc.Dropdown( 
+                id='indicator',
+                options=[{'label': i, 'value': i} for i in available_indicators],
+                value='Final consumption expenditure' 
+            )
+        ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
+    ]),
+
+    dcc.Graph(id='line-chart')   
 ])
 
 @app.callback(
@@ -117,6 +141,41 @@ def update_graph(xaxis_column_name, yaxis_column_name,
         )
     }
 
+@app.callback(
+    dash.dependencies.Output('line-chart', 'figure'),
+    [dash.dependencies.Input('country', 'value'),
+     dash.dependencies.Input('indicator', 'value')
+    ])
+def update_graph(country_name, indicator_name):
+    
+    
+    
+    return {
+        'data': [go.Scatter(
+            x = df['TIME'].unique(), 
+            y = df[(df['NA_ITEM'] == indicator_name) & (df['GEO'] == country_name)]['Value'], # get the value for y coordinate
+            text = country_name, 
+            mode='lines',
+            marker={
+                'size': 15,
+                'opacity': 0.5,
+                'line': {'width': 0.5, 'color': 'white'}
+            }
+        )],
+        'layout': go.Layout(
+            xaxis={
+                'title': 'TIME'
+            
+            },
+            yaxis={
+                'title': indicator_name
+                
+            },
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
 if __name__ == '__main__':
     app.run_server()
 
@@ -134,13 +193,13 @@ app = dash.Dash()
 
 available_indicators = df['NA_ITEM'].unique()
 available_countries = df['GEO'].unique()
-#available_years = df['TIME'].unique()
+
 
 app.layout = html.Div([
     html.Div([
 
         html.Div([
-            dcc.Dropdown(   # first select country
+            dcc.Dropdown(   
                 id='country',
                 options=[{'label': i, 'value': i} for i in available_countries],
                 value='Spain' 
@@ -149,10 +208,10 @@ app.layout = html.Div([
         style={'width': '48%', 'display': 'inline-block'}),
 
         html.Div([
-            dcc.Dropdown( # then select indicator
+            dcc.Dropdown( 
                 id='indicator',
                 options=[{'label': i, 'value': i} for i in available_indicators],
-                value='Final consumption expenditure' # indicator
+                value='Final consumption expenditure' 
             )
         ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
     ]),
@@ -167,13 +226,13 @@ app.layout = html.Div([
     ])
 def update_graph(country_name, indicator_name):
     
-    #dff = df[df['TIME'] == year_value]
+   
     
     return {
         'data': [go.Scatter(
-            x = df['TIME'].unique(), # time to show on x axis
+            x = df['TIME'].unique(), 
             y = df[(df['NA_ITEM'] == indicator_name) & (df['GEO'] == country_name)]['Value'], # get the value for y coordinate
-            text = country_name, # we can use it as we input
+            text = country_name, 
             mode='lines',
             marker={
                 'size': 15,
